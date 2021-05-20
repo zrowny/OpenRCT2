@@ -157,6 +157,7 @@ std::vector<std::unique_ptr<ImageTable::RequiredImage>> ImageTable::ParseImages(
     auto x = Json::GetNumber<int16_t>(el["x"]);
     auto y = Json::GetNumber<int16_t>(el["y"]);
     auto raw = Json::GetString(el["format"]) == "raw";
+    auto keepPalette = Json::GetBoolean(el["keepPalette"]);
 
     std::vector<std::unique_ptr<RequiredImage>> result;
     try
@@ -166,8 +167,14 @@ std::vector<std::unique_ptr<ImageTable::RequiredImage>> ImageTable::ParseImages(
         {
             flags = static_cast<ImageImporter::IMPORT_FLAGS>(flags | ImageImporter::IMPORT_FLAGS::RLE);
         }
+        IMAGE_FORMAT format = IMAGE_FORMAT::PNG_32;
+        if (keepPalette)
+        {
+            flags = static_cast<ImageImporter::IMPORT_FLAGS>(flags | ImageImporter::IMPORT_FLAGS::KEEP_PALETTE);
+            format = IMAGE_FORMAT::PNG;
+        }
         auto imageData = context->GetData(path);
-        auto image = Imaging::ReadFromBuffer(imageData, IMAGE_FORMAT::PNG_32);
+        auto image = Imaging::ReadFromBuffer(imageData, format);
 
         ImageImporter importer;
         auto importResult = importer.Import(image, 0, 0, flags);
